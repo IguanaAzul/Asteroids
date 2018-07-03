@@ -29,6 +29,44 @@ float orientacaoTemp,orientacaoRadTemp, vTemp, vAngTemp;
 int k[256]; // Vetor de teclas, 1 para tecla pressionada e 0 para tecla solta
 int pausaJogo = 0;
 
+void inicializa(void){
+    int i;
+    for (i=0; i<256; i++){
+        k[i]=0;
+    }
+    placar = 0;
+    for (i=0; i<numeroTiros; i++){
+        xTiro[i]=7500;
+        yTiro[i]=7500;
+        vTiro[i]=0;
+        aTiro[i]=-1;
+    }
+    for (i=0; i<numeroAsteroides; i++){
+        nLadosAsteroide[i] = rand()%6+5;
+        aAsteroide[i]=-1;
+        xAsteroide[i]=7500;
+        yAsteroide[i]=7500;
+        orientacaoGrausAsteroide[i] = rand()%360;
+        orientacaoRadAsteroide[i] = grausParaRadianos(orientacaoGrausAsteroide[i]);
+        vAsteroide[i] = 0;
+        vAngAsteroide[i] = 0;
+    }
+    for(i=0; i<numeroAsteroides/3; i++){
+        aAsteroide[i]=0;
+        int j;
+        nLadosAsteroide[i] = rand()%6+5;
+        j = rand()%2;
+        if (j==0){xAsteroide[i] = -(larguraJanela/2) + rand()%(larguraJanela/4);} else {xAsteroide[i] = (larguraJanela/2) - rand()%(larguraJanela/4);};
+        j = rand()%2;
+        if (j==0){yAsteroide[i] = -(alturaJanela/2)+ rand()%(alturaJanela/4);} else {yAsteroide[i] = (alturaJanela/2) - rand()%(alturaJanela/4);};
+        rAsteroide[i] = rand()%7+13;
+        orientacaoGrausAsteroide[i] = rand()%360;
+        orientacaoRadAsteroide[i] = grausParaRadianos(orientacaoGrausAsteroide[i]);
+        vAsteroide[i] = (float)(rand()%20+1)/10;
+        vAngAsteroide[i] = (float)(rand()%30+1)/30;
+    }
+    glClearColor(0, 0, 0, 0);
+}
 void desenhaNave(void){
     glPushMatrix();
         glTranslatef(xNave, yNave, 0);
@@ -110,18 +148,24 @@ void detectaColisoes(void){
     int i, j;
     for (i=0; i<numeroAsteroides; i++){
         if(colidiu(xAsteroide[i], yAsteroide[i] , xNave, yNave, rAsteroide[i]+9)){
-            exit(0);
+            inicializa();
         }
     }
     for (i=0; i<numeroAsteroides; i++){
-        for (j=0; j<numeroAsteroides; j++){
+        for (j=i; j<numeroAsteroides; j++){
             if (i==j) continue; //
             if (colidiu(xAsteroide[i], yAsteroide[i] , xAsteroide[j], yAsteroide[j], rAsteroide[i]+rAsteroide[j])){
                 orientacaoTemp = orientacaoGrausAsteroide[i];
                 orientacaoRadTemp = orientacaoRadAsteroide[i];
                 vTemp = vAsteroide[i];
                 vAngTemp = vAngAsteroide[i];
+		
+		xAsteroide[i]+=cos(orientacaoRadAsteroide[j])*vAsteroide[j]/10;
+		yAsteroide[i]+=sin(orientacaoRadAsteroide[j])*vAsteroide[j]/10;
+		xAsteroide[j]+=cos(orientacaoRadAsteroide[i])*vAsteroide[j]/10;
+		yAsteroide[j]+=sin(orientacaoRadAsteroide[i])*vAsteroide[j]/10;
 
+		
                 vAsteroide[i]=vAsteroide[j];
                 orientacaoGrausAsteroide[i]=orientacaoGrausAsteroide[j];
                 orientacaoRadAsteroide[i]=orientacaoRadAsteroide[j];
@@ -146,8 +190,8 @@ void detectaColisoes(void){
         for (j=0; j<numeroTiros; j++){
             if (aTiro[j] != -1 && colidiu(xAsteroide[i], yAsteroide[i], xTiro[j], yTiro[j], rAsteroide[i])){
                     placar += 2;
-				    xTiro[j]=3000;
-				    yTiro[j]=3000;
+				    xTiro[j]=7500;
+				    yTiro[j]=7500;
 				    vTiro[j]=0;
 				    aTiro[j]=-1;
                     if (aAsteroide[i]==0){
@@ -155,19 +199,19 @@ void detectaColisoes(void){
                         for(m=0; m<2; m++){
                             int b = proximoBB();
                             if (b != -1){
-                                xAsteroide[b] = xAsteroide[i];
-                                yAsteroide[b] = yAsteroide[i];
-                                vAsteroide[b] = (float)(rand()%20+1)/20;
-                                vAngAsteroide[b] = (float)(rand()%30+1)/30;
+                                vAsteroide[b] = (float)(rand()%20+1)/5;
+                                vAngAsteroide[b] = (float)(rand()%30+1)/5;
                                 rAsteroide[b] = rAsteroide[i]/2;
                                 orientacaoGrausAsteroide[b] = rand()%360;
                                 orientacaoRadAsteroide[b] = grausParaRadianos(orientacaoGrausAsteroide[i]);
                                 aAsteroide[b]=2;
+                                xAsteroide[b] = xAsteroide[i]+pow(-1,m)*cos(orientacaoRadAsteroide[b])*vAsteroide[b]*rAsteroide[b];
+                                yAsteroide[b] = yAsteroide[i]+pow(-1,m)*sin(orientacaoRadAsteroide[b])*vAsteroide[b]*rAsteroide[b];
                             }
                         }
                     }
-                    xAsteroide[i] = 3000; 
-                    yAsteroide[i] = 3000;
+                    xAsteroide[i] = 7500; 
+                    yAsteroide[i] = 7500;
                     vAsteroide[i] = 0;
                     aAsteroide[i]=-1;
             }
@@ -178,16 +222,16 @@ void detectaColisoes(void){
 void atualizaPosicaoAsteroide(int i){
     xAsteroide[i] += cos(orientacaoRadAsteroide[i])*vAsteroide[i];
     yAsteroide[i] += sin(orientacaoRadAsteroide[i])*vAsteroide[i];
-    if (xAsteroide[i] >= larguraJanela/2 && xAsteroide[i]!=3000){
+    if (xAsteroide[i] >= larguraJanela/2 && xAsteroide[i]!=7500){
             xAsteroide[i] = xAsteroide[i] - larguraJanela;
     };
-    if (yAsteroide[i] >= alturaJanela/2 && yAsteroide[i]!=3000){
+    if (yAsteroide[i] >= alturaJanela/2 && yAsteroide[i]!=7500){
             yAsteroide[i] = yAsteroide[i] - alturaJanela;
     };
-    if (xAsteroide[i] <= -larguraJanela/2 && xAsteroide[i]!=3000){
+    if (xAsteroide[i] <= -larguraJanela/2 && xAsteroide[i]!=7500){
             xAsteroide[i] = xAsteroide[i] + larguraJanela;
     };
-    if (yAsteroide[i] <= -alturaJanela/2 && yAsteroide[i]!=3000){
+    if (yAsteroide[i] <= -alturaJanela/2 && yAsteroide[i]!=7500){
             yAsteroide[i] = yAsteroide[i] + alturaJanela;
     };
     rotAsteroide[i] += vAngAsteroide[i];
@@ -197,25 +241,25 @@ void atualizaPosicaoAsteroide(int i){
 void atualizaPosicaoTiro(int i){
         xTiro[i] += cos(orientacaoRadTiro[i])*vTiro[i];
         yTiro[i] += sin(orientacaoRadTiro[i])*vTiro[i];
-        if (xTiro[i] >= larguraJanela/2 && xTiro[i]!=3000){
+        if (xTiro[i] >= larguraJanela/2 && xTiro[i]!=7500){
                 xTiro[i] = xTiro[i] - larguraJanela;
                 aTiro[i]+=1;
         };
-        if (yTiro[i] >= alturaJanela/2 && yTiro[i]!=3000){
+        if (yTiro[i] >= alturaJanela/2 && yTiro[i]!=7500){
                 yTiro[i] = yTiro[i] - alturaJanela;
                 aTiro[i]+=1;
         };
-        if (xTiro[i] <= -larguraJanela/2 && xTiro[i]!=3000){
+        if (xTiro[i] <= -larguraJanela/2 && xTiro[i]!=7500){
                 xTiro[i] = xTiro[i] + larguraJanela;
                 aTiro[i]+=1;
         };
-        if (yTiro[i] <= -alturaJanela/2 && yTiro[i]!=3000){
+        if (yTiro[i] <= -alturaJanela/2 && yTiro[i]!=7500){
                 yTiro[i] = yTiro[i] + alturaJanela;
                 aTiro[i]+=1;
         };
         if(aTiro[i]!=-1 && (tempoAtual-aTiro[i])>tempoVidaTiro){
-            xTiro[i]=3000;
-            yTiro[i]=3000;
+            xTiro[i]=7500;
+            yTiro[i]=7500;
             vTiro[i]=0;
             aTiro[i]=-1;
         }
@@ -294,45 +338,6 @@ void atualiza(int idx){
     }
     glutPostRedisplay();
     glutTimerFunc(17, atualiza, 0);
-}
-
-void inicializa(void){
-    int i;
-    for (i=0; i<256; i++){
-        k[i]=0;
-    }
-    placar = 0;
-    for (i=0; i<numeroTiros; i++){
-        xTiro[i]=3000;
-        yTiro[i]=3000;
-        vTiro[i]=0;
-        aTiro[i]=-1;
-    }
-    for (i=0; i<numeroAsteroides; i++){
-        nLadosAsteroide[i] = rand()%6+5;
-        aAsteroide[i]=-1;
-        xAsteroide[i]=3000;
-        yAsteroide[i]=3000;
-        orientacaoGrausAsteroide[i] = rand()%360;
-        orientacaoRadAsteroide[i] = grausParaRadianos(orientacaoGrausAsteroide[i]);
-        vAsteroide[i] = 0;
-        vAngAsteroide[i] = 0;
-    }
-    for(i=0; i<numeroAsteroides/3; i++){
-        aAsteroide[i]=0;
-        int j;
-        nLadosAsteroide[i] = rand()%6+5;
-        j = rand()%2;
-        if (j==0){xAsteroide[i] = -(larguraJanela/2) + rand()%(larguraJanela/4);} else {xAsteroide[i] = (larguraJanela/2) - rand()%(larguraJanela/4);};
-        j = rand()%2;
-        if (j==0){yAsteroide[i] = -(alturaJanela/2)+ rand()%(alturaJanela/4);} else {yAsteroide[i] = (alturaJanela/2) - rand()%(alturaJanela/4);};
-        rAsteroide[i] = rand()%7+13;
-        orientacaoGrausAsteroide[i] = rand()%360;
-        orientacaoRadAsteroide[i] = grausParaRadianos(orientacaoGrausAsteroide[i]);
-        vAsteroide[i] = (float)(rand()%20+1)/10;
-        vAngAsteroide[i] = (float)(rand()%30+1)/30;
-    }
-    glClearColor(0, 0, 0, 0);
 }
 
 void redimensiona(int w, int h){
